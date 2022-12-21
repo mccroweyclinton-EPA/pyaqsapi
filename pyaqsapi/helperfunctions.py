@@ -3,6 +3,8 @@
 
 from pandas import DataFrame, concat
 from requests import get
+
+# from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from time import sleep
 from warnings import warn
 from datetime import date
@@ -278,10 +280,14 @@ class AQSAPI_V2:
         if service is None:
             service = ""
         url = AQS_domain + service + "/" + aqsfilter
-        # AQS_domain = "https://aqs.epa.gov/data/api/" + service + "/" + aqsfilter
         header = {"User-Agent": user_agent, "From": AQS_user}
-
-        query = get(url=url, params=variables, headers=header, verify=where())
+        # requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        try:
+            query = get(
+                url=url, params=variables, headers=header, verify=where()
+            )
+        except requests.exceptions.SSLError:
+            pass
         query.raise_for_status()
         self.set_header(DataFrame(query.headers))
         self.set_data(DataFrame.from_dict(query.json()["Data"]))
@@ -1091,7 +1097,9 @@ def aqs_removeheader(aqsobject):
     return aqsresult
 
 
-def _aqsmultiyearcall(fun, parameter, bdate, edate, service, name1, name2, **kwargs):
+def _aqsmultiyearcall(
+    fun, parameter, bdate, edate, service, name1, name2, **kwargs
+):
     """
         A helper function not to be used by end users.
 
@@ -1170,11 +1178,13 @@ def _aqsmultiyearcall(fun, parameter, bdate, edate, service, name1, name2, **kwa
         # until end date (including the year of bdate and not the year of
         # edate) with edate appended to the end.
         bdatelist = [
-            date(year=x, month=1, day=1) for x in range(bdate.year + 1, edate.year + 1)
+            date(year=x, month=1, day=1)
+            for x in range(bdate.year + 1, edate.year + 1)
         ]
         bdatelist.insert(0, bdate)
         edatelist = [
-            date(year=y, month=12, day=31) for y in range(bdate.year, edate.year)
+            date(year=y, month=12, day=31)
+            for y in range(bdate.year, edate.year)
         ]
         edatelist.append(edate)
 
