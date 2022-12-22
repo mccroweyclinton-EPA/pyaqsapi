@@ -4,7 +4,7 @@
 from pandas import DataFrame, concat
 from requests import get
 
-# from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from time import sleep
 from warnings import warn
 from datetime import date
@@ -178,7 +178,7 @@ class AQSAPI_V2:
         """
         return self._request_time
 
-    def __aqs_ratelimit(self, waittime=5):
+    def __aqs_ratelimit(self, waittime=10):
         """
         A wrapper function to time.sleep() used as a rudimentary ratelimit
         between API requests.
@@ -286,7 +286,7 @@ class AQSAPI_V2:
             query = get(
                 url=url, params=variables, headers=header, verify=where()
             )
-        except requests.exceptions.SSLError:
+        except url.exceptions.SSLError:
             pass
         query.raise_for_status()
         self.set_header(DataFrame(query.headers))
